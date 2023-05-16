@@ -260,22 +260,24 @@ internal class BaseDFUPeripheral<TD : BasePeripheralDelegate> : NSObject, BaseDF
     }
     
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
-        guard peripheral.isEqual(self.peripheral) else {
-            return
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            guard peripheral.isEqual(self.peripheral) else {
+                return
+            }
+            
+            self.cleanUp()
+            
+            self.logger.d("[Callback] Central Manager did connect peripheral")
+            let name = peripheral.name ?? "Unknown device"
+            self.logger.i("Connected to \(name)")
+            
+            guard !self.aborted else {
+                self.resetDevice()
+                return
+            }
+            
+            self.discoverServices()
         }
-        
-        cleanUp()
-        
-        logger.d("[Callback] Central Manager did connect peripheral")
-        let name = peripheral.name ?? "Unknown device"
-        logger.i("Connected to \(name)")
-        
-        guard !aborted else {
-            resetDevice()
-            return
-        }
-        
-        discoverServices()
     }
     
     func centralManager(_ central: CBCentralManager,
